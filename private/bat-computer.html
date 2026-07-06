@@ -19,12 +19,12 @@
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <div class="container-fluid">
         <a class="navbar-brand" href="/register.html">Batcave Security</a>
-        <a class="nav-link" href="#" onclick="logout()">Se déconnecter</a>
+        <a class="nav-link" href="/auth/logout">Se déconnecter</a>
       </div>
     </nav>
 
     <main class="container py-4">
-      <h1 id="welcome">Bienvenue dans le Bat-Ordinateur</h1>
+      <h1 id="welcome">Bienvenue, Justicier __USERNAME__</h1>
 
       <section class="my-4">
         <h2>Arsenal</h2>
@@ -44,37 +44,9 @@
       </section>
     </main>
 
-    <script src="/logout.js"></script>
     <script>
-      const username = window.prompt("Nom d'utilisateur")
-      const password = window.prompt('Mot de passe')
-      const authHeader = 'Basic ' + btoa(username + ':' + password)
-
-      const fetchWithAuth = url => {
-        return fetch(url, {
-          headers: {
-            Authorization: authHeader
-          }
-        })
-      }
-
-      const loadUser = async () => {
-        const response = await fetchWithAuth('/api/me')
-
-        if (!response.ok) {
-          document.getElementById('welcome').textContent =
-            'Impossible de charger le justicier connecté.'
-          return
-        }
-
-        const user = await response.json()
-        document.getElementById(
-          'welcome'
-        ).textContent = `Bienvenue, Justicier ${user.username}`
-      }
-
       const loadGadgets = async () => {
-        const response = await fetchWithAuth('/api/secrets')
+        const response = await fetch('/api/secrets')
         const gadgetsContainer = document.getElementById('gadgets')
 
         if (!response.ok) {
@@ -108,7 +80,6 @@
         const response = await fetch('/api/reports', {
           method: 'POST',
           headers: {
-            Authorization: authHeader,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ content })
@@ -124,7 +95,6 @@
         }
       }
 
-      loadUser()
       loadGadgets()
     </script>
   </body>

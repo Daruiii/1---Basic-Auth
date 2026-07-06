@@ -46,9 +46,7 @@
 
     <script src="/logout.js"></script>
     <script>
-      const username = window.prompt("Nom d'utilisateur")
-      const password = window.prompt('Mot de passe')
-      const authHeader = 'Basic ' + btoa(username + ':' + password)
+      const authHeader = __AUTH_HEADER__
 
       const fetchWithAuth = url => {
         return fetch(url, {

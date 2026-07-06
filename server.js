@@ -1,6 +1,7 @@
 // Import des librairies et de la BDD
 const express = require('express')
 const bcrypt = require('bcrypt')
+const fs = require('fs')
 const path = require('path')
 const db = require('./db')
 
@@ -100,6 +101,7 @@ const checkAuth = async (req, res, next) => {
   // Comparaison des mots de passe avec bcrypt
   if (user && (await bcrypt.compare(password, user.password_hash))) {
     req.user = user // On conserve l'utilisateur dans la requête, si besoin
+    req.authHeader = authHeader
     next()
   } else {
     return res.status(401).send('Identifiants invalides')
@@ -107,8 +109,12 @@ const checkAuth = async (req, res, next) => {
 }
 
 app.get('/bat-computer', checkAuth, (req, res) => {
-  // La route sert uniquement le fichier HTML
-  res.sendFile(path.join(__dirname, 'private', 'bat-computer.html'))
+  const filePath = path.join(__dirname, 'private', 'bat-computer.html')
+  const html = fs
+    .readFileSync(filePath, 'utf8')
+    .replace('__AUTH_HEADER__', JSON.stringify(req.authHeader))
+
+  res.send(html)
 })
 
 app.get('/api/secrets', checkAuth, (req, res) => {

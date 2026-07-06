@@ -14,7 +14,8 @@ document.getElementById('register-form').onsubmit = async e => {
     messageElement.style.color = 'green'
     messageElement.textContent = 'Inscription réussie !'
   } else {
+    const message = await response.text()
     messageElement.style.color = 'red'
-    messageElement.textContent = "Erreur lors de l'inscription."
+    messageElement.textContent = message || "Erreur lors de l'inscription."
   }
 }

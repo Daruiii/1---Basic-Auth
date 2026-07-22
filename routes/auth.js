@@ -1,6 +1,13 @@
 const express = require('express')
 const bcrypt = require('bcrypt')
 const db = require('../db')
+const {
+  createAccessToken,
+  createRefreshToken,
+  getRefreshTokenExpiration,
+  setAuthCookies,
+  clearAuthCookies
+} = require('../utils/tokens')
 
 const router = express.Router()
 
@@ -48,6 +55,10 @@ router.post('/login', async (req, res) => {
   const username = req.body.username?.trim()
   const { password } = req.body
 
+  if (!username || !password) {
+    return res.status(401).send('Identifiants invalides')
+  }
+
   const user = db
     .prepare('SELECT * FROM users WHERE username = ?')
     .get(username)
@@ -56,35 +67,29 @@ router.post('/login', async (req, res) => {
     return res.status(401).send('Identifiants invalides')
   }
 
-  req.session.regenerate(err => {
-    if (err) {
-      return res.status(500).send('Erreur serveur.')
-    }
+  const accessToken = createAccessToken(user)
+  const refreshToken = createRefreshToken()
 
-    req.session.user = {
-      id: user.id,
-      username: user.username
-    }
+  db.prepare(
+    `
+    INSERT INTO refresh_tokens (user_id, token, expires_at)
+    VALUES (?, ?, ?)
+  `
+  ).run(user.id, refreshToken, getRefreshTokenExpiration())
 
-    req.session.save(saveErr => {
-      if (saveErr) {
-        return res.status(500).send('Erreur serveur.')
-      }
-
-      res.redirect('/bat-computer')
-    })
-  })
+  setAuthCookies(res, accessToken, refreshToken)
+  res.redirect('/bat-computer')
 })
 
 router.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      return res.status(500).send('Erreur serveur.')
-    }
+  const { refreshToken } = req.cookies
 
-    res.clearCookie('bat_identity')
-    res.redirect('/auth/login')
-  })
+  if (refreshToken) {
+    db.prepare('DELETE FROM refresh_tokens WHERE token = ?').run(refreshToken)
+  }
+
+  clearAuthCookies(res)
+  res.redirect('/auth/login')
 })
 
 module.exports = router

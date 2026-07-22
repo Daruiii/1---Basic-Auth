@@ -1,9 +1,8 @@
 const express = require('express')
-const fs = require('fs')
 const path = require('path')
 const bcrypt = require('bcrypt')
 const db = require('../db')
-const isAuthenticated = require('../middlewares/authCheck')
+const checkJWT = require('../middlewares/authCheck')
 
 const router = express.Router()
 
@@ -58,24 +57,20 @@ router.post('/register', async (req, res) => {
   }
 })
 
-router.get('/bat-computer', isAuthenticated, (req, res) => {
+router.get('/bat-computer', (req, res) => {
   const filePath = path.join(__dirname, '..', 'private', 'bat-computer.html')
-  const html = fs
-    .readFileSync(filePath, 'utf8')
-    .replace('__USERNAME__', req.session.user.username)
-
-  res.send(html)
+  res.sendFile(filePath)
 })
 
-router.get('/api/secrets', isAuthenticated, (req, res) => {
+router.get('/api/secrets', checkJWT, (req, res) => {
   res.json(gadgets)
 })
 
-router.get('/api/me', isAuthenticated, (req, res) => {
-  res.json(req.session.user)
+router.get('/api/me', checkJWT, (req, res) => {
+  res.json({ id: req.user.id, username: req.user.username })
 })
 
-router.post('/api/reports', isAuthenticated, (req, res) => {
+router.post('/api/reports', checkJWT, (req, res) => {
   const content = req.body.content?.trim()
 
   if (!content) {
@@ -84,7 +79,7 @@ router.post('/api/reports', isAuthenticated, (req, res) => {
 
   const report = db
     .prepare('INSERT INTO reports (user_id, content) VALUES (?, ?)')
-    .run(req.session.user.id, content)
+    .run(req.user.id, content)
 
   res.status(201).json({
     id: report.lastInsertRowid,

@@ -1,21 +1,19 @@
-const isAuthenticated = (req, res, next) => {
-  if (!req.session.user) {
-    return res.status(401).send(`
-      <!DOCTYPE html>
-      <html lang="fr-FR">
-        <head>
-          <meta charset="UTF-8" />
-          <meta http-equiv="refresh" content="0; url=/auth/login" />
-          <title>Authentification requise</title>
-        </head>
-        <body>
-          <p>Authentification requise. Redirection vers la connexion.</p>
-        </body>
-      </html>
-    `)
+const jwt = require('jsonwebtoken')
+
+const checkJWT = (req, res, next) => {
+  const accessToken = req.cookies.accessToken
+
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Access token manquant.' })
+  }
+
+  try {
+    req.user = jwt.verify(accessToken, process.env.JWT_SECRET)
+  } catch (error) {
+    return res.status(401).json({ error: 'Access token invalide ou expiré.' })
   }
 
   next()
 }
 
-module.exports = isAuthenticated
+module.exports = checkJWT

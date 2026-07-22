@@ -3,7 +3,6 @@ const db = new Database('auth_demo.db')
 
 db.pragma('foreign_keys = ON')
 
-// Création de la table avec `username` UNIQUE
 db.prepare(
   `
   CREATE TABLE IF NOT EXISTS users (
@@ -22,6 +21,19 @@ db.prepare(
     content TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+`
+).run()
+
+db.prepare(
+  `
+  CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   )
 `
 ).run()

@@ -24,7 +24,7 @@
     </nav>
 
     <main class="container py-4">
-      <h1 id="welcome">Bienvenue, Justicier __USERNAME__</h1>
+      <h1 id="welcome">Bienvenue</h1>
 
       <section class="my-4">
         <h2>Arsenal</h2>
@@ -42,60 +42,38 @@
           <p id="report-message" class="mt-2"></p>
         </form>
       </section>
+
+      <section class="my-4">
+        <h2>Modifier le mot de passe</h2>
+        <form id="password-form">
+          <label for="current-password" class="form-label">
+            Mot de passe actuel
+          </label>
+          <input
+            id="current-password"
+            type="password"
+            class="form-control"
+            required
+          />
+
+          <label for="new-password" class="form-label mt-2">
+            Nouveau mot de passe
+          </label>
+          <input
+            id="new-password"
+            type="password"
+            class="form-control"
+            required
+          />
+
+          <button type="submit" class="btn btn-primary mt-2">
+            Modifier
+          </button>
+          <p id="password-message" class="mt-2"></p>
+        </form>
+      </section>
     </main>
 
-    <script>
-      const loadGadgets = async () => {
-        const response = await fetch('/api/secrets')
-        const gadgetsContainer = document.getElementById('gadgets')
-
-        if (!response.ok) {
-          gadgetsContainer.textContent = "Impossible de charger l'arsenal."
-          return
-        }
-
-        const gadgets = await response.json()
-        gadgetsContainer.innerHTML = gadgets
-          .map(
-            gadget => `
-              <article class="col-md-4">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <i class="fa-solid ${gadget.icon} fs-2 mb-3"></i>
-                    <h3 class="h5">${gadget.name}</h3>
-                    <p>${gadget.desc}</p>
-                  </div>
-                </div>
-              </article>
-            `
-          )
-          .join('')
-      }
-
-      document.getElementById('report-form').onsubmit = async event => {
-        event.preventDefault()
-
-        const messageElement = document.getElementById('report-message')
-        const content = document.getElementById('report').value
-        const response = await fetch('/api/reports', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ content })
-        })
-
-        if (response.ok) {
-          messageElement.style.color = 'green'
-          messageElement.textContent = 'Rapport enregistré.'
-          document.getElementById('report').value = ''
-        } else {
-          messageElement.style.color = 'red'
-          messageElement.textContent = "Erreur lors de l'enregistrement."
-        }
-      }
-
-      loadGadgets()
-    </script>
+    <script src="/dashboard.js"></script>
   </body>
 </html>

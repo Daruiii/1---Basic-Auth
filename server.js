@@ -1,18 +1,13 @@
-// Import des librairies et de la BDD
 const express = require('express')
 const bcrypt = require('bcrypt')
 const fs = require('fs')
 const path = require('path')
 const db = require('./db')
 
-// Créé du serveur Express
 const app = express()
-// Rend possible la lecture et l'écriture du JSON
 app.use(express.json())
-// Ouvre les fichiers frontend non protégés
 app.use(express.static('public'))
 
-// Lance le serveur en local, sur le port 3000
 const PORT = 3000
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`)
@@ -37,7 +32,6 @@ const gadgets = [
 ]
 
 app.post('/register', async (req, res) => {
-  // Récupère les identifiants saisis par l'utilisateur
   const username = req.body.username?.trim()
   const { password } = req.body
 
@@ -53,11 +47,9 @@ app.post('/register', async (req, res) => {
       .send('Le mot de passe doit contenir au moins 8 caractères.')
   }
 
-  // Hachage du mot de passe avant stockage !
   const hash = await bcrypt.hash(password, 10)
 
   try {
-    // Requête SQL pour insérer le nouvel utilisateur en base
     const insert = db.prepare(
       'INSERT INTO users (username, password_hash) VALUES (?, ?)'
     )
@@ -73,15 +65,12 @@ app.post('/register', async (req, res) => {
 })
 
 const checkAuth = async (req, res, next) => {
-  // Récupère l'en-tête pour la vérifier avant d'atteindre les routes protégées
   const authHeader = req.headers.authorization
 
   if (!authHeader || !authHeader.startsWith('Basic ')) {
-    // Ajoute l'en-tête pour demander au navigateur d'ouvrir la fenêtre de connexion
     res.setHeader('WWW-Authenticate', 'Basic realm="Administration"')
     return res.status(401).send('Authentification requise')
   }
-  // Décodage du Base64
   const base64 = authHeader.split(' ')[1]
   const credentials = Buffer.from(base64, 'base64').toString()
   const separatorIndex = credentials.indexOf(':')
@@ -94,13 +83,11 @@ const checkAuth = async (req, res, next) => {
   const username = credentials.slice(0, separatorIndex)
   const password = credentials.slice(separatorIndex + 1)
 
-  // Vérification en BDD
   const user = db
     .prepare('SELECT * FROM users WHERE username = ?')
     .get(username)
-  // Comparaison des mots de passe avec bcrypt
   if (user && (await bcrypt.compare(password, user.password_hash))) {
-    req.user = user // On conserve l'utilisateur dans la requête, si besoin
+    req.user = user
     req.authHeader = authHeader
     next()
   } else {

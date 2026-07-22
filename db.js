@@ -3,7 +3,6 @@ const db = new Database('auth_demo.db')
 
 db.pragma('foreign_keys = ON')
 
-// Création de la table avec `username` UNIQUE
 db.prepare(
   `
   CREATE TABLE IF NOT EXISTS users (

@@ -8,10 +8,24 @@ db.prepare(
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
-    password_hash TEXT
+    password_hash TEXT,
+    two_factor_secret TEXT,
+    two_factor_enabled INTEGER NOT NULL DEFAULT 0
   )
 `
 ).run()
+
+const userColumns = db.prepare('PRAGMA table_info(users)').all()
+
+if (!userColumns.some(column => column.name === 'two_factor_secret')) {
+  db.prepare('ALTER TABLE users ADD COLUMN two_factor_secret TEXT').run()
+}
+
+if (!userColumns.some(column => column.name === 'two_factor_enabled')) {
+  db.prepare(
+    'ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER NOT NULL DEFAULT 0'
+  ).run()
+}
 
 db.prepare(
   `

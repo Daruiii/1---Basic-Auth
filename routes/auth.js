@@ -1,54 +1,18 @@
 const express = require('express')
+const path = require('path')
 const bcrypt = require('bcrypt')
 const db = require('../db')
 const {
-  createAccessToken,
-  createRefreshToken,
-  getRefreshTokenExpiration,
-  setAuthCookies,
+  createMfaChallenge,
+  setMfaChallengeCookie,
+  clearMfaChallengeCookie,
   clearAuthCookies
 } = require('../utils/tokens')
 
 const router = express.Router()
 
 router.get('/login', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="fr-FR">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Connexion</title>
-        <link
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
-        <main class="container py-4">
-          <h1>Connexion</h1>
-          <form method="post" action="/auth/login">
-            <label for="username" class="form-label">Nom d'utilisateur</label>
-            <input id="username" name="username" class="form-control" required />
-
-            <label for="password" class="form-label mt-2">Mot de passe</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              class="form-control"
-              required
-            />
-
-            <button type="submit" class="btn btn-primary mt-3">
-              Se connecter
-            </button>
-          </form>
-          <a href="/register.html" class="d-block mt-3">Créer un compte</a>
-        </main>
-      </body>
-    </html>
-  `)
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'))
 })
 
 router.post('/login', async (req, res) => {
@@ -56,7 +20,7 @@ router.post('/login', async (req, res) => {
   const { password } = req.body
 
   if (!username || !password) {
-    return res.status(401).send('Identifiants invalides')
+    return res.status(401).json({ error: 'Identifiants invalides.' })
   }
 
   const user = db
@@ -64,21 +28,29 @@ router.post('/login', async (req, res) => {
     .get(username)
 
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-    return res.status(401).send('Identifiants invalides')
+    return res.status(401).json({ error: 'Identifiants invalides.' })
   }
 
-  const accessToken = createAccessToken(user)
-  const refreshToken = createRefreshToken()
+  const { refreshToken } = req.cookies
 
-  db.prepare(
-    `
-    INSERT INTO refresh_tokens (user_id, token, expires_at)
-    VALUES (?, ?, ?)
-  `
-  ).run(user.id, refreshToken, getRefreshTokenExpiration())
+  if (refreshToken) {
+    db.prepare('DELETE FROM refresh_tokens WHERE token = ?').run(refreshToken)
+  }
 
-  setAuthCookies(res, accessToken, refreshToken)
-  res.redirect('/bat-computer')
+  clearAuthCookies(res)
+  clearMfaChallengeCookie(res)
+
+  if (!user.two_factor_enabled) {
+    return res.status(403).json({
+      error: 'Vous devez activer la double authentification.',
+      requires2FASetup: true,
+      username: user.username
+    })
+  }
+
+  const challenge = createMfaChallenge(user)
+  setMfaChallengeCookie(res, challenge)
+  res.json({ requires2FA: true, username: user.username })
 })
 
 router.get('/logout', (req, res) => {
@@ -89,6 +61,7 @@ router.get('/logout', (req, res) => {
   }
 
   clearAuthCookies(res)
+  clearMfaChallengeCookie(res)
   res.redirect('/auth/login')
 })
 

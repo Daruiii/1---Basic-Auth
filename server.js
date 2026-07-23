@@ -6,6 +6,7 @@ const helmet = require('helmet')
 const authRouter = require('./routes/auth')
 const apiAuthRouter = require('./routes/apiAuth')
 const batComputerRouter = require('./routes/batComputer')
+const oauthRouter = require('./routes/oauth')
 
 const app = express()
 app.use(
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(express.static('public'))
 
+app.use('/auth/oauth', oauthRouter)
 app.use('/auth', authRouter)
 app.use('/api', apiAuthRouter)
 app.use('/', batComputerRouter)

@@ -13,7 +13,7 @@ const authFetch = async (url, options = {}) => {
   })
 
   if (!refreshResponse.ok) {
-    window.location.href = '/auth/login'
+    window.location.href = '/'
     return response
   }
 
@@ -77,30 +77,6 @@ document.getElementById('report-form').onsubmit = async event => {
 
   if (response.ok) {
     reportElement.value = ''
-  }
-}
-
-document.getElementById('password-form').onsubmit = async event => {
-  event.preventDefault()
-
-  const messageElement = document.getElementById('password-message')
-  const currentPasswordElement = document.getElementById('current-password')
-  const newPasswordElement = document.getElementById('new-password')
-  const response = await authFetch('/api/auth/change-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      currentPassword: currentPasswordElement.value,
-      newPassword: newPasswordElement.value
-    })
-  })
-  const result = await response.json()
-
-  messageElement.style.color = response.ok ? 'green' : 'red'
-  messageElement.textContent = result.message || result.error
-
-  if (response.ok) {
-    event.target.reset()
   }
 }
 

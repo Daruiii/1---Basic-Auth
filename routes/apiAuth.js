@@ -46,7 +46,7 @@ router.post('/auth/refresh', (req, res) => {
   const storedToken = db
     .prepare(
       `
-      SELECT refresh_tokens.*, users.username
+      SELECT refresh_tokens.*, users.username, users.display_name
       FROM refresh_tokens
       JOIN users ON users.id = refresh_tokens.user_id
       WHERE refresh_tokens.token = ?
@@ -62,7 +62,7 @@ router.post('/auth/refresh', (req, res) => {
 
   const accessToken = createAccessToken({
     id: storedToken.user_id,
-    username: storedToken.username
+    username: storedToken.display_name || storedToken.username
   })
 
   setAccessTokenCookie(res, accessToken)

@@ -62,7 +62,7 @@ router.get('/logout', (req, res) => {
 
   clearAuthCookies(res)
   clearMfaChallengeCookie(res)
-  res.redirect('/auth/login')
+  res.redirect('/')
 })
 
 module.exports = router
